@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스톱워치 & 카운트다운 타이머</title>
+    <!-- Tailwind CSS CDN 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Inter 폰트를 기본으로 사용 */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* 다크 블루 배경 */
+            color: #e2e8f0; /* 밝은 텍스트 */
+            min-height: 100vh;
+        }
+        .time-display {
+            font-size: 3rem; /* 모바일 기본 크기 */
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #ffffff;
+        }
+        @media (min-width: 640px) {
+            .time-display {
+                font-size: 5rem; /* 데스크톱 크기 */
+            }
+        }
+    </style>
+    <script>
+        // Tailwind 설정: 강조색 정의
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#4c51bf', /* 메인 강조색 */
+                        'primary-hover': '#5a61d1',
+                        'danger-red': '#e53e3e',
+                        'card-bg': '#2d3748', /* 카드 배경색 */
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="p-4 sm:p-8 flex items-center justify-center">
+
+    <div class="w-full max-w-2xl bg-card-bg rounded-2xl shadow-2xl p-6 sm:p-10">
+
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center mb-6 text-primary-blue">
+            ⏱️ 타이머 & 스톱워치 앱
+        </h1>
+
+        <!-- 탭 네비게이션 -->
+        <div class="flex justify-center mb-8 border-b border-gray-600">
+            <button id="tab-stopwatch" class="tab-button w-1/2 py-3 text-lg font-semibold border-b-2 border-primary-blue text-white transition duration-200">
+                스톱워치
+            </button>
+            <button id="tab-timer" class="tab-button w-1/2 py-3 text-lg font-semibold border-b-2 border-transparent text-gray-400 hover:text-white transition duration-200">
+                카운트다운
+            </button>
+        </div>
+
+        <!-- 1. 스톱워치 섹션 -->
+        <div id="stopwatch-view" class="active-view">
+            <div class="text-center mb-10 p-4 bg-gray-800 rounded-xl">
+                <div id="stopwatch-display" class="time-display">00:00:00.<span class="text-3xl sm:text-5xl text-gray-400">000</span></div>
+            </div>
+
+            <!-- 스톱워치 컨트롤 버튼 -->
+            <div class="flex justify-center space-x-4 mb-8">
+                <button id="stopwatch-start-btn" class="px-6 py-3 rounded-full text-white font-bold bg-primary-blue hover:bg-primary-hover transition duration-200 shadow-lg transform hover:scale-105">
+                    시작
+                </button>
+                <button id="stopwatch-stop-btn" class="hidden px-6 py-3 rounded-full text-white font-bold bg-danger-red hover:bg-red-600 transition duration-200 shadow-lg transform hover:scale-105">
+                    정지
+                </button>
+                <button id="stopwatch-reset-btn" class="px-6 py-3 rounded-full text-gray-300 font-bold bg-gray-600 hover:bg-gray-700 transition duration-200 shadow-lg transform hover:scale-105">
+                    초기화
+                </button>
+                <button id="stopwatch-lap-btn" class="hidden px-6 py-3 rounded-full text-white font-bold bg-green-600 hover:bg-green-700 transition duration-200 shadow-lg transform hover:scale-105">
+                    랩 기록
+                </button>
+            </div>
+
+            <!-- 랩 기록 목록 -->
+            <h3 class="text-xl font-semibold mb-3 border-b border-gray-700 pb-2 text-primary-blue">랩 기록</h3>
+            <ul id="lap-list" class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                <!-- 랩 기록이 여기에 추가됩니다. -->
+            </ul>
+        </div>
+
+        <!-- 2. 카운트다운 타이머 섹션 -->
+        <div id="timer-view" class="hidden active-view">
+            
+            <!-- 시간 설정 입력 필드 -->
+            <div class="flex justify-center items-center space-x-4 mb-8">
+                <input type="number" id="timer-hours" placeholder="시간" min="0" max="99" value="0" class="w-1/3 p-3 text-center rounded-lg bg-gray-800 border border-gray-700 text-white focus:ring-primary-blue focus:border-primary-blue">
+                <span class="text-2xl font-bold">:</span>
+                <input type="number" id="timer-minutes" placeholder="분" min="0" max="59" value="5" class="w-1/3 p-3 text-center rounded-lg bg-gray-800 border border-gray-700 text-white focus:ring-primary-blue focus:border-primary-blue">
+                <span class="text-2xl font-bold">:</span>
+                <input type="number" id="timer-seconds" placeholder="초" min="0" max="59" value="0" class="w-1/3 p-3 text-center rounded-lg bg-gray-800 border border-gray-700 text-white focus:ring-primary-blue focus:border-primary-blue">
+            </div>
+
+            <div class="text-center mb-10 p-4 bg-gray-800 rounded-xl">
+                <div id="timer-display" class="time-display">00:05:00</div>
+            </div>
+            
+            <!-- 타이머 컨트롤 버튼 -->
+            <div class="flex justify-center space-x-4">
+                <button id="timer-start-btn" class="px-6 py-3 rounded-full text-white font-bold bg-primary-blue hover:bg-primary-hover transition duration-200 shadow-lg transform hover:scale-105">
+                    시작
+                </button>
+                <button id="timer-pause-btn" class="hidden px-6 py-3 rounded-full text-white font-bold bg-yellow-600 hover:bg-yellow-700 transition duration-200 shadow-lg transform hover:scale-105">
+                    일시정지
+                </button>
+                <button id="timer-reset-btn" class="px-6 py-3 rounded-full text-gray-300 font-bold bg-gray-600 hover:bg-gray-700 transition duration-200 shadow-lg transform hover:scale-105">
+                    초기화
+                </button>
+            </div>
+        </div>
+        
+        <!-- 메시지 박스 (Alert 대체) -->
+        <div id="message-box" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+            <div class="bg-card-bg p-8 rounded-xl shadow-2xl text-center max-w-sm w-full border border-primary-blue">
+                <h3 id="message-title" class="text-2xl font-bold mb-4 text-primary-blue"></h3>
+                <p id="message-content" class="text-lg mb-6 text-gray-300"></p>
+                <button id="message-close-btn" class="px-6 py-2 bg-primary-blue text-white rounded-lg hover:bg-primary-hover transition duration-200">확인</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // DOM 요소 정의
+        const $ = selector => document.querySelector(selector);
+        const $$ = selector => document.querySelectorAll(selector);
+
+        // --- 탭 관리 로직 ---
+        const tabStopwatch = $('#tab-stopwatch');
+        const tabTimer = $('#tab-timer');
+        const stopwatchView = $('#stopwatch-view');
+        const timerView = $('#timer-view');
+
+        const views = {
+            'stopwatch-view': { tab: tabStopwatch, element: stopwatchView },
+            'timer-view': { tab: tabTimer, element: timerView }
+        };
+
+        let currentView = 'stopwatch-view';
+
+        function switchTab(viewId) {
+            // 현재 뷰 비활성화
+            views[currentView].element.classList.add('hidden');
+            views[currentView].tab.classList.remove('border-primary-blue', 'text-white');
+            views[currentView].tab.classList.add('border-transparent', 'text-gray-400', 'hover:text-white');
+
+            // 새 뷰 활성화
+            currentView = viewId;
+            views[currentView].element.classList.remove('hidden');
+            views[currentView].tab.classList.add('border-primary-blue', 'text-white');
+            views[currentView].tab.classList.remove('border-transparent', 'text-gray-400', 'hover:text-white');
+        }
+
+        tabStopwatch.addEventListener('click', () => switchTab('stopwatch-view'));
+        tabTimer.addEventListener('click', () => switchTab('timer-view'));
+
+        // --- 유틸리티: 시간 포맷팅 ---
+        function formatTime(ms) {
+            let totalSeconds = Math.floor(ms / 1000);
+            let milliseconds = ms % 1000;
+            let hours = Math.floor(totalSeconds / 3600);
+            let minutes = Math.floor((totalSeconds % 3600) / 60);
+            let seconds = totalSeconds % 60;
+            
+            // 시, 분, 초, 밀리초 포맷팅
+            const h = String(hours).padStart(2, '0');
+            const m = String(minutes).padStart(2, '0');
+            const s = String(seconds).padStart(2, '0');
+            const msFormatted = String(milliseconds).padStart(3, '0').slice(0, 3);
+
+            return `${h}:${m}:${s}.<span class="text-3xl sm:text-5xl text-gray-400">${msFormatted}</span>`;
+        }
+        
+        function formatTimeSeconds(totalSeconds) {
+            let hours = Math.floor(totalSeconds / 3600);
+            let minutes = Math.floor((totalSeconds % 3600) / 60);
+            let seconds = totalSeconds % 60;
+
+            const h = String(hours).padStart(2, '0');
+            const m = String(minutes).padStart(2, '0');
+            const s = String(seconds).padStart(2, '0');
+            
+            return `${h}:${m}:${s}`;
+        }
+        
+        // --- 유틸리티: 커스텀 메시지 박스 ---
+        const messageBox = $('#message-box');
+        const messageTitle = $('#message-title');
+        const messageContent = $('#message-content');
+        const messageCloseBtn = $('#message-close-btn');
+
+        function showMessage(title, content) {
+            messageTitle.textContent = title;
+            messageContent.textContent = content;
+            messageBox.classList.remove('hidden');
+        }
+
+        messageCloseBtn.addEventListener('click', () => {
+            messageBox.classList.add('hidden');
+        });
+
+
+        // ===================================
+        //           스톱워치 로직
+        // ===================================
+
+        const swDisplay = $('#stopwatch-display');
+        const swStartBtn = $('#stopwatch-start-btn');
+        const swStopBtn = $('#stopwatch-stop-btn');
+        const swResetBtn = $('#stopwatch-reset-btn');
+        const swLapBtn = $('#stopwatch-lap-btn');
+        const lapList = $('#lap-list');
+
+        let startTime;
+        let elapsedTime = 0;
+        let swInterval = null;
+        let lapCount = 0;
+        let lastLapTime = 0;
+
+        // 스톱워치 디스플레이 업데이트
+        function updateStopwatchDisplay() {
+            const now = Date.now();
+            elapsedTime = now - startTime;
+            swDisplay.innerHTML = formatTime(elapsedTime);
+        }
+
+        // 스톱워치 시작
+        function startStopwatch() {
+            if (swInterval !== null) return;
+            
+            startTime = Date.now() - elapsedTime;
+            swInterval = setInterval(updateStopwatchDisplay, 10); // 10ms 간격으로 업데이트 (밀리초 표시)
+            
+            // 버튼 상태 변경
+            swStartBtn.classList.add('hidden');
+            swStopBtn.classList.remove('hidden');
+            swLapBtn.classList.remove('hidden');
+        }
+
+        // 스톱워치 정지
+        function stopStopwatch() {
+            if (swInterval === null) return;
+            
+            clearInterval(swInterval);
+            swInterval = null;
+            
+            // 버튼 상태 변경
+            swStartBtn.classList.remove('hidden');
+            swStopBtn.classList.add('hidden');
+            swLapBtn.classList.add('hidden'); // 정지 시 랩 버튼 숨김
+        }
+
+        // 스톱워치 리셋
+        function resetStopwatch() {
+            stopStopwatch();
+            elapsedTime = 0;
+            lastLapTime = 0;
+            lapCount = 0;
+            swDisplay.innerHTML = formatTime(0);
+            lapList.innerHTML = '';
+            
+            // 시작/정지 버튼 재설정
+            swStartBtn.classList.remove('hidden');
+            swStopBtn.classList.add('hidden');
+            swLapBtn.classList.add('hidden');
+        }
+
+        // 랩 기록
+        function lapStopwatch() {
+            if (swInterval === null) return;
+            
+            lapCount++;
+            const currentLapTime = elapsedTime - lastLapTime;
+            
+            // 랩 타임을 밀리초 포맷으로 변환
+            const totalTimeHtml = formatTime(elapsedTime).replace(/<[^>]*>?/gm, ''); // HTML 태그 제거
+            const lapTimeHtml = formatTime(currentLapTime).replace(/<[^>]*>?/gm, '');
+            
+            const lapItem = document.createElement('li');
+            lapItem.classList.add('flex', 'justify-between', 'p-2', 'rounded-lg', 'bg-gray-700/50');
+            lapItem.innerHTML = `
+                <span class="font-bold text-primary-blue">랩 ${String(lapCount).padStart(2, '0')}</span>
+                <span class="font-mono text-sm sm:text-base text-white">${lapTimeHtml}</span>
+                <span class="font-mono text-sm sm:text-base text-gray-400">${totalTimeHtml}</span>
+            `;
+
+            // 목록의 맨 앞에 추가
+            lapList.prepend(lapItem);
+            
+            lastLapTime = elapsedTime; // 마지막 랩 기록 시간 업데이트
+        }
+
+        // 이벤트 리스너 연결
+        swStartBtn.addEventListener('click', startStopwatch);
+        swStopBtn.addEventListener('click', stopStopwatch);
+        swResetBtn.addEventListener('click', resetStopwatch);
+        swLapBtn.addEventListener('click', lapStopwatch);
+
+
+        // ===================================
+        //           타이머 로직
+        // ===================================
+        
+        const tmDisplay = $('#timer-display');
+        const tmHoursInput = $('#timer-hours');
+        const tmMinutesInput = $('#timer-minutes');
+        const tmSecondsInput = $('#timer-seconds');
+        const tmStartBtn = $('#timer-start-btn');
+        const tmPauseBtn = $('#timer-pause-btn');
+        const tmResetBtn = $('#timer-reset-btn');
+
+        let targetTimeSeconds = 300; // 기본 5분 (300초)
+        let tmInterval = null;
+        let isTimerRunning = false;
+        
+        // 입력 필드와 타이머 값 동기화
+        function syncInputsToTargetTime() {
+            // 입력 값을 읽고 초 단위로 변환
+            let h = parseInt(tmHoursInput.value) || 0;
+            let m = parseInt(tmMinutesInput.value) || 0;
+            let s = parseInt(tmSecondsInput.value) || 0;
+
+            // 유효성 검사 및 보정
+            h = Math.min(Math.max(0, h), 99);
+            m = Math.min(Math.max(0, m), 59);
+            s = Math.min(Math.max(0, s), 59);
+            
+            tmHoursInput.value = h;
+            tmMinutesInput.value = m;
+            tmSecondsInput.value = s;
+            
+            targetTimeSeconds = (h * 3600) + (m * 60) + s;
+            tmDisplay.textContent = formatTimeSeconds(targetTimeSeconds);
+        }
+
+        // 타이머 디스플레이 업데이트
+        function updateTimerDisplay() {
+            if (targetTimeSeconds <= 0) {
+                pauseTimer();
+                targetTimeSeconds = 0; // 0으로 고정
+                showMessage('시간 종료!', '카운트다운이 완료되었습니다. 초기화 버튼을 눌러주세요.');
+            }
+            
+            tmDisplay.textContent = formatTimeSeconds(targetTimeSeconds);
+            
+            // 1초 감소
+            if (isTimerRunning) {
+                targetTimeSeconds--;
+            }
+        }
+
+        // 타이머 시작
+        function startTimer() {
+            syncInputsToTargetTime(); // 시작 전 최종 값 동기화
+            
+            if (targetTimeSeconds <= 0) {
+                showMessage('시간 설정 오류', '타이머를 시작하려면 시간을 설정해 주세요.');
+                return;
+            }
+            if (isTimerRunning) return;
+
+            isTimerRunning = true;
+            // 입력 필드 비활성화
+            tmHoursInput.disabled = true;
+            tmMinutesInput.disabled = true;
+            tmSecondsInput.disabled = true;
+            
+            // 1초마다 업데이트
+            tmInterval = setInterval(updateTimerDisplay, 1000);
+            
+            // 버튼 상태 변경
+            tmStartBtn.classList.add('hidden');
+            tmPauseBtn.classList.remove('hidden');
+        }
+
+        // 타이머 일시정지
+        function pauseTimer() {
+            if (!isTimerRunning) return;
+            
+            clearInterval(tmInterval);
+            tmInterval = null;
+            isTimerRunning = false;
+            
+            // 버튼 상태 변경
+            tmStartBtn.classList.remove('hidden');
+            tmPauseBtn.classList.add('hidden');
+        }
+
+        // 타이머 리셋
+        function resetTimer() {
+            pauseTimer();
+            // 입력 값으로 돌아가기 전에 현재 화면에 표시된 값으로 Target Time 재설정
+            syncInputsToTargetTime(); 
+            
+            // 입력 필드 활성화
+            tmHoursInput.disabled = false;
+            tmMinutesInput.disabled = false;
+            tmSecondsInput.disabled = false;
+            
+            // 디스플레이 초기값 표시
+            tmDisplay.textContent = formatTimeSeconds(targetTimeSeconds);
+            
+            // 버튼 상태 변경
+            tmStartBtn.classList.remove('hidden');
+            tmPauseBtn.classList.add('hidden');
+        }
+
+        // 입력 필드 변경 시 targetTimeSeconds 업데이트
+        $$('#timer-view input[type="number"]').forEach(input => {
+            input.addEventListener('change', () => {
+                if (!isTimerRunning) {
+                    syncInputsToTargetTime();
+                }
+            });
+            input.addEventListener('input', (e) => {
+                // 입력 최대 길이 제한 (99:2자리, 59:2자리)
+                if (e.target.value.length > 2) {
+                    e.target.value = e.target.value.slice(0, 2);
+                }
+            });
+        });
+        
+        // 이벤트 리스너 연결
+        tmStartBtn.addEventListener('click', startTimer);
+        tmPauseBtn.addEventListener('click', pauseTimer);
+        tmResetBtn.addEventListener('click', resetTimer);
+        
+        // 초기 설정: 타이머 기본값 세팅
+        window.onload = function() {
+            syncInputsToTargetTime();
+            updateTimerDisplay(); // 초기 화면에 00:05:00 표시
+        }
+    </script>
+</body>
+</html>
